@@ -1,128 +1,211 @@
-var song
-var fft
-var particles = []
-var img
+let fft, img, mic, eel, ctx, camShader, visualiser;
+const particles = []
+
+// const eelString = `⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n
+// ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⢋⣁⣠⣼⠿⠟⢛⡛⠛⠛⠿⢿⣿⣿⣿\n
+// ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⢛⣩⣴⠾⠛⠉⠀⠀⠀⠀⠿⠟⠀⣶⠶⠾⠛⣿⣿\n
+// ⣿⣿⣿⣿⣿⣿⠿⠛⣉⣴⠾⠛⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣠⣴⣾⣿⣿\n
+// ⣿⣿⣿⠛⠉⣀⣴⠟⠋⠁⠀⠀⠀⠀⠀⢀⣠⣤⣶⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n
+// ⣿⣿⣧⢠⡾⠋⠁⠀⠀⠀⠀⢀⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n
+// ⣿⣿⣿⣿⠁⠀⠀⠀⠀⠀⠀⣿⣥⣄⣉⣉⣉⣛⠛⠛⠿⠿⢿⣿⣿⣿⣿⣿⣿⣿\n
+// ⣿⣿⣿⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠛⠛⠛⠛⠷⠶⣦⣤⣉⠙⠻⣿⣿\n
+// ⣿⣿⣿⣿⣿⣶⣤⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠻⣦⣿⣿\n
+// ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣶⣶⣶⣶⣶⣶⣶⣶⣦⠀⠀⠀⠀⢸⣿⣿\n
+// ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠛⣩⣽⠏⠀⠀⠀⠀⣸⣿⣿\n
+// ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠿⠛⠋⣉⣠⣤⠶⠟⠋⠀⠀⠀⠀⣠⣾⣿⣿⣿\n
+// ⣿⣿⣿⠿⠛⠛⠉⢉⣉⣠⣤⡶⠶⠟⠛⠋⠉⠀⠀⠀⢀⣀⣤⣶⣿⣿⣿⣿⣿⣿\n
+// ⣿⣿⠁⢰⣶⣛⣋⣉⣉⣁⣀⣀⣠⣤⣤⣴⣶⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n
+// ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n
+// `;
+
+const eelString = `
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡴⠾⠟⠃⣀⣠⡤⢤⣤⣤⣀⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡤⠖⠋⣁⣤⣶⣿⣿⣿⣿⣀⣠⣿⠉⣉⣁⣤⠀⠀
+⠀⠀⠀⠀⠀⠀⣀⣤⠶⠋⣁⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠟⠋⠁⠀⠀
+⠀⠀⠀⣤⣶⠿⠋⣠⣴⣾⣿⣿⣿⣿⣿⡿⠟⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠘⡟⢁⣴⣾⣿⣿⣿⣿⡿⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⣾⣿⣿⣿⣿⣿⣿⠀⠚⠻⠶⠶⠶⠤⣤⣤⣀⣀⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣶⣶⣶⣤⣤⣤⣤⣈⣉⠙⠛⠶⣦⣄⠀⠀
+⠀⠀⠀⠀⠀⠉⠛⠻⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣦⣄⠙⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠉⠉⠉⠉⠉⠙⣿⣿⣿⣿⡇⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣤⠖⠂⣰⣿⣿⣿⣿⠇⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣴⠶⠟⠛⣉⣠⣴⣿⣿⣿⣿⠟⠁⠀⠀⠀
+⠀⠀⠀⣀⣤⣤⣶⡶⠶⠟⠛⢉⣉⣠⣤⣴⣶⣿⣿⣿⡿⠿⠛⠉⠀⠀⠀⠀⠀⠀
+⠀⠀⣾⡏⠉⠤⠴⠶⠶⠾⠿⠿⠟⠛⠛⠋⠉⠉⠀`;
+
+
+const createAudioContext = () => {
+        mic = new p5.AudioIn();
+        mic.start();
+        fft = new p5.FFT(0.8, 512);
+        fft.setInput(mic);
+        getAudioContext().resume();
+        document.getElementsByTagName("button")[0].style.display = "none";
+}
 
 function preload() {
-    inputbtn = createFileInput((file)=>{
-        song = loadSound(file)
-        document.getElementsByTagName("input")[0].setAttribute("type","hidden");
-        alert("Click on the screen to play or pause")
-    }); 
-    var inputELE = document.getElementsByTagName("input")[0]
-    inputbtn.position(windowWidth/2 -120,15)
-    inputELE.style.backgroundColor = '#fe00e8';
-    inputELE.style.height = '42px';
-    inputELE.style.padding = '10px';
-    // song = loadSound("../../assets/Veens - Girl.mp3")
-    img = loadImage("https://images.unsplash.com/photo-1482686115713-0fbcaced6e28?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=747")
-    // img = loadImage("https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=750&q=80")
+    camShader = loadShader("effect.vert", "effect.frag");
 }
 
 function setup() {
-    createCanvas(windowWidth, windowHeight);
+    ctx = createCanvas(windowWidth, windowHeight, WEBGL);
+
+    vs = createGraphics(windowWidth,windowHeight);
+
     angleMode(DEGREES)
     imageMode(CENTER)
     rectMode(CENTER)
-    fft = new p5.FFT(0.8, 512)
-    img.filter(BLUR, 1)
-    noLoop()
 }
 
 function draw() {
-    background(0)
-    
+  if (!mic) {
+    return null;
+  }
 
-    translate(width/2, height/2)
+  const vol = mic.getLevel();
 
-    fft.analyze()
-    amp = fft.getEnergy(20, 200)
+  shader(camShader)
+  camShader.setUniform("tex0", ctx);
 
-    push()
-    if(amp>230) {
-        rotate(random(-1, 1))
-    }
-    image(img, 0, 0, width + 100, height + 100)
-    pop()
+  // we will also need the resolution of our sketch as a vec2
+  camShader.setUniform("resolution", [width, height]);
 
-    var alpha = map(amp, 0, 255, 100, 150)
-    fill(20, alpha)
-    noStroke()
-    rect(0, 0, width, height)
+  camShader.setUniform("offsetStrength",vol*50);
+  
+  // vs.background("#4294A2");
+  vs.background(0,5,10);
 
-    stroke(255)     // stroke color of ring
-    // stroke(220, 107, 255)
-    strokeWeight(3)
-    noFill()
-    // fill(255)
+  // vs.translate(1, 0);
 
-    var wave = fft.waveform()
+  // image(img, 0, 0, width + 100, height + 100)
 
-    for(var t = -1; t <= 1; t += 2) {
-        beginShape()
-        for(var i = 0; i <= 180; i += 0.5) {
-            var index = floor(map(i,0,180,0,wave.length-1))
-            var r = map(wave[index], -1, 1, 90, 350)
-            var x = r * sin(i) * t
-            var y = r * cos(i)
-            vertex(x,y)
-        }
-        endShape()
-    }
+  fft.analyze();
+  // console.log(spectrum);
+  amp = fft.getEnergy(20, 200);
 
-    var p = new Particle()
-    particles.push(p)
 
-    for(var i = particles.length - 1; i >= 0; i--) {
-        if(!particles[i].edges()) {
-            particles[i].update(amp > 230)
-            particles[i].show()
-        } else {
-            particles.splice(i, 1)
-        }
-        
+
+  vs.textAlign(LEFT);
+
+  vs.textSize(20);
+
+  
+  
+
+  const stringLimit = map(vol,0,0.2,0,eelString.length)
+
+  vs.text(eelString.slice(0,stringLimit), 0, 60, width,height);
+
+vs.textAlign(RIGHT);
+  vs.text(eelString.slice(-stringLimit), 0, height/2, width, height);
+
+
+    vs.push();
+    if (amp > 230) {
+      vs.rotate(random(-0.1, 0.1));
     }
 
+  vs.textAlign(CENTER)
+
+  vs.textSize(100);
+
+
+
+  vs.text("O̷̩̭̣̽Ñ̶̹͆͂̎͠L̴̡̗̝̖̟̣̺̼͊̑̓̒̀͗̀̕̚̕Y̵̛̛̲̘͚̻̯̩̫͎͒̀͌̀͘͜\ǹ̴̮̭̈́̍͑̅͂̏̕Ȩ̷̗̤͖̬̀͆Ḙ̸͇͚̤̞̺̩̖̃́̅͗Ľ̶̡̛̳̫̘͓̲̜̘̤̅̎̎͒͐͠ͅZ̸̧̦̰̣͔̽͂̔̏̒̎ͅ", width/2, height/2);
+  vs.pop();
+
+  vs.stroke(255); // stroke color of ring
+  // stroke(220, 107, 255)
+  vs.strokeWeight(3);
+  vs.noFill();
+  // fill(255)
+
+  var wave = fft.waveform();
+
+  for (var t = -1; t <= 1; t += 2) {
+    vs.beginShape();
+    for (var i = 0; i <= 180; i += 0.5) {
+      var index = floor(map(i, 0, 180, 0, wave.length - 1));
+      var r = map(wave[index], -1, 1, 160, 500);
+      var x = r * sin(i) * t + width/2;
+      var y = r * cos(i) + height/2;
+      vs.vertex(x, y);
+    }
+    vs.endShape();
+  }
+
+  if (amp > 150) {
+          var p = new Particle();
+          particles.push(p);
+  }
+
+  // if (particles.length < 40) {
+  //   particles.push(new Particle());
+  // }
+
+  // for (var i = particles.length - 1; i >= 0; i--) {
+  //   if (!particles[i].edges()) {
+  //     particles[i].update(amp > 230);
+  //     particles[i].show();
+  //   } else {
+  //     particles.splice(i, 1);
+  //   }
+  // }
+
+  // var alpha = map(amp, 0, 255, 100, 150);
+  // fill(20, alpha);
+  image(vs,0,0)
+  noStroke();
+  rect(0, 0, width, height);
+
+
+  
+//   filter(GRAY)
 }
 
-function mouseClicked() {
-    if(song.isPlaying()) {
-        song.pause()
-        noLoop()
+function drawEel(vec) {
+  vs.push();  
+  // vs.rotate(360*vec.heading()/(2*PI));
+  // vs.translate(vec.mag(), 0);
+  // vs.rotate(135);
+  vs.image(eel, vec.x+500, vec.y, 50, 50);
+  vs.pop();
+}
+
+class Particle {
+  constructor() {
+    this.pos = p5.Vector.random2D().mult(380);
+    this.vel = createVector(0, 0);
+    this.acc = this.pos.copy().mult(random(0.0001, 0.00001));
+
+    this.w = random(3, 5);
+    this.color = [random(100, 255), random(200, 255), random(100, 255)];
+  }
+  update(cond) {
+    this.vel.add(this.acc);
+    this.pos.add(this.vel);
+    if (cond) {
+      this.pos.add(this.vel);
+      this.pos.add(this.vel);
+      this.pos.add(this.vel);
+    }
+  }
+  edges() {
+    if (
+      this.pos.x < -width / 2 ||
+      this.pos.x > width / 2 ||
+      this.pos.y < -height / 2 ||
+      this.pos.y > height / 2
+    ) {
+      return true;
     } else {
-        song.play()
-        loop()
+      return false;
     }
+  }
+  show() {
+    vs.noStroke();
+    vs.fill(this.color);
+    vs.ellipse(this.pos.x + width/2, this.pos.y + height/2, this.w);
+  }
 }
 
-class Particle{
-    constructor() {
-        this.pos = p5.Vector.random2D().mult(250)
-        this.vel = createVector(0,0)
-        this.acc = this.pos.copy().mult(random(0.0001, 0.00001))
-
-        this.w = random(3, 5)
-        this.color = [random(100,255), random(200,255), random(100,255)]
-    }
-    update(cond) {
-        this.vel.add(this.acc)
-        this.pos.add(this.vel)
-        if(cond) {
-            this.pos.add(this.vel)
-            this.pos.add(this.vel)
-            this.pos.add(this.vel)
-        }
-    }
-    edges() {
-        if(this.pos.x < -width/2 || this.pos.x > width/2 || this.pos.y < -height/2 || this.pos.y > height/2) {
-            return true
-        } else {
-            return false
-        }
-    }
-    show() {
-        noStroke()
-        fill(this.color)
-        ellipse(this.pos.x, this.pos.y, this.w)
-    }
-}

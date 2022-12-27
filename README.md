@@ -1,5 +1,5 @@
 # onlyeelzvisualiser
 
-Fun little music visualiser coded in p5.js and WebGL (shaders based on [https://github.com/aferriss/p5jsShaderExamples](this repo)). 
+Fun little music visualiser coded in p5.js and WebGL (shaders based on [this repo](https://github.com/aferriss/p5jsShaderExamples)). 
 
-Works in the browser [https://sfrl.github.io/onlyeelzvisualiser/] with microphone input.
+Works in the browser https://sfrl.github.io/onlyeelzvisualiser/ with microphone input.
